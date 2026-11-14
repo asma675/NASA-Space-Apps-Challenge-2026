@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 REGIONS = {
     "northern_ontario": {"name": "Northern Ontario", "bbox": [-94.0, 47.0, -79.0, 56.0], "center": [51.4, -85.7], "zoom": 5},
     "alberta_boreal": {"name": "Alberta Boreal", "bbox": [-120.0, 53.0, -110.0, 60.0], "center": [56.5, -115.0], "zoom": 6},
+    "alberta_province": {"name": "Alberta (province archive)", "bbox": [-120.4, 48.8, -109.6, 60.3], "center": [54.2, -115.0], "zoom": 5},
     "bc_interior": {"name": "B.C. Interior", "bbox": [-124.0, 49.0, -116.0, 56.0], "center": [52.6, -120.0], "zoom": 6},
 }
 SOURCES = {
@@ -102,7 +103,7 @@ def insert_rows(rows: Iterable[tuple]):
         return conn.total_changes - before
 
 
-def get_rows(mode: str, region: str, start: str, end: str, limit: int = 250000):
+def get_rows(mode: str, region: str, start: str, end: str, limit: int = 1000000):
     bbox = REGIONS[region]["bbox"]
     with connection() as conn:
         return [dict(r) for r in conn.execute("""SELECT * FROM observations WHERE mode=?

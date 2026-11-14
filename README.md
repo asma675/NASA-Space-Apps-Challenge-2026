@@ -1,3 +1,29 @@
+# Alberta 2023 real NASA FIRMS data edition
+
+**This build includes actual NASA FIRMS historical archive data imported from the user-provided 2023 Alberta MODIS and S-NPP VIIRS ZIPs.** You do **not** need a FIRMS MAP_KEY or CSV uploads to explore these historical observations. MapTiler's optional premium basemap still requires a public MapTiler API key.
+
+## Start on Windows
+```powershell
+cd "C:\Users\asmaa\Downloads\Parallax_BLINDSPOT_Alberta2023_RealData"
+py -m pip install -r backend/requirements.txt
+py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
+```
+Open http://127.0.0.1:8765.
+
+**Select:** Region: Alberta (province archive); Mode: Real FIRMS records; Start: 2023-05-01; End: 2023-10-31; click Analyze region.
+
+### Important changes
+- Added **Alberta (province archive)** region to match the archived Alberta data download. The region selector is an approximate bounding box; source observations were downloaded from NASA's Alberta region request.
+- Raised in-memory analysis result ceiling from 250,000 to 1,000,000 observation records so the full 2023 season is not silently truncated. The analysis may run more slowly for a full season, depending on your computer.
+- No API keys, admin passwords, or private user data are embedded in this distribution.
+- Original synthetic demo records remain in Demo mode and are separated from Real FIRMS records.
+- Real records are from NASA FIRMS archive request #849825 (MODIS C6.1) and #849826 (S-NPP VIIRS C2), Alberta, May 1 through October 31, 2023.
+- **Scientific limitations:** This app aligns fire observations to a 10-km grid and UTC dates and deduplicates within each sensor family. It does NOT calibrate differences in orbital coverage, clouds, or sensor detection sensitivity. A thermal hotspot is not a verified individual wildfire, and MODIS/VIIRS hotspot counts cannot be interpreted as directly comparable fire counts.
+
+For deployment, prefer the separately provided clean starter without a large bundled SQLite dataset, and load official data on the server. If pushing this code to GitHub, `.gitignore` excludes local `.sqlite3` databases; the full dataset will not appear in the GitHub repo by default.
+
+---
+
 # PARALLAX BLINDSPOT
 ### NASA Space Apps Challenge 2026 — MODIS & VIIRS Hot Spot Harmonization
 

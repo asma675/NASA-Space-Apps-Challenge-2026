@@ -68,7 +68,7 @@ def analysis(region: str="northern_ontario", start: str="2021-01-01", end: str="
     result=analyze(rows, REGIONS[region],start,end,mode)
     result["data_origin"]="ILLUSTRATIVE SYNTHETIC DATA — NOT NASA" if mode=="demo" else "NASA FIRMS API or user-imported FIRMS-format CSV; verify provenance"
     result["loaded_observations"]=len(rows)
-    result["truncated"]=(len(rows)==250000)
+    result["truncated"]=(len(rows)==1000000)
     return result
 
 @app.post("/api/ingest/nasa")
