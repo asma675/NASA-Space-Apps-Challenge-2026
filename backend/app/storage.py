@@ -62,6 +62,7 @@ def init_db():
         );
         CREATE INDEX IF NOT EXISTS idx_obs_analysis ON observations(mode,acq_date,latitude,longitude);
         CREATE INDEX IF NOT EXISTS idx_obs_product ON observations(product);
+        CREATE INDEX IF NOT EXISTS idx_obs_region_date ON observations(mode,acq_date,longitude,latitude);
         """)
 
 

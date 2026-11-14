@@ -5,7 +5,8 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY backend /app/backend
 COPY frontend /app/frontend
 COPY scripts /app/scripts
+COPY backend/tests /app/backend/tests
 RUN mkdir -p /app/data
 ENV PYTHONPATH=/app/backend BLINDSPOT_DB_PATH=/app/data/blindspot.sqlite3
 EXPOSE 8000
-CMD ["sh","-c","python /app/scripts/seed_demo.py && exec uvicorn app.main:app --app-dir /app/backend --host 0.0.0.0 --port 8000"]
+CMD ["sh","-c","python /app/scripts/seed_demo.py && exec uvicorn app.main:app --app-dir /app/backend --host 0.0.0.0 --port 8765"]

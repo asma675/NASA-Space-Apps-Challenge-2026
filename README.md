@@ -2,13 +2,35 @@
 
 **This build includes actual NASA FIRMS historical archive data imported from the user-provided 2023 Alberta MODIS and S-NPP VIIRS ZIPs.** You do **not** need a FIRMS MAP_KEY or CSV uploads to explore these historical observations. MapTiler's optional premium basemap still requires a public MapTiler API key.
 
-## Start on Windows
+## One-command Docker start (Windows, macOS, Linux)
+
+Install Docker Desktop, then from the repository root run:
+
+```bash
+docker compose up --build -d
+```
+
+Open **http://127.0.0.1:8765**. Compose mounts `./data` into the container, so an existing local `data/blindspot.sqlite3` is used and survives container rebuilds. On a fresh clone with no database, the app starts with clearly labeled synthetic demo data; download/import the FIRMS archives below to load real historical data. To stop it, run `docker compose down`.
+
+Pytest is installed in the container. Run the suite with `docker compose run --rm blindspot python -m pytest -q /app/backend/tests`.
+
+## Native start on Windows
 ```powershell
-cd "C:\Users\asmaa\Downloads\Parallax_BLINDSPOT_Alberta2023_RealData"
+cd "C:\path\to\NASA-Space-Apps-Challenge-2026"
 py -m pip install -r backend/requirements.txt
 py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
 ```
 Open http://127.0.0.1:8765.
+
+### Import the historical archives
+
+Place the original ZIPs under `data/raw/` (do not commit them; `.gitignore` excludes that directory) and run from the repository root:
+
+```bash
+python scripts/import_firms_archives.py --modis "data/raw/DL_FIRE_M-C61_849825.zip" --viirs "data/raw/DL_FIRE_SV-C2_849826.zip"
+```
+
+This imports request 849825 as MODIS C6.1 and request 849826 as S-NPP VIIRS C2. It is safe to rerun. Restart/recreate the container after importing if it is already running: `docker compose restart blindspot`.
 
 **Select:** Region: Alberta (province archive); Mode: Real FIRMS records; Start: 2023-05-01; End: 2023-10-31; click Analyze region.
 
@@ -20,7 +42,7 @@ Open http://127.0.0.1:8765.
 - Real records are from NASA FIRMS archive request #849825 (MODIS C6.1) and #849826 (S-NPP VIIRS C2), Alberta, May 1 through October 31, 2023.
 - **Scientific limitations:** This app aligns fire observations to a 10-km grid and UTC dates and deduplicates within each sensor family. It does NOT calibrate differences in orbital coverage, clouds, or sensor detection sensitivity. A thermal hotspot is not a verified individual wildfire, and MODIS/VIIRS hotspot counts cannot be interpreted as directly comparable fire counts.
 
-For deployment, prefer the separately provided clean starter without a large bundled SQLite dataset, and load official data on the server. If pushing this code to GitHub, `.gitignore` excludes local `.sqlite3` databases; the full dataset will not appear in the GitHub repo by default.
+For GitHub, `.gitignore` excludes local `.sqlite3` databases, `.env` secrets, and `data/raw/` archive downloads. A fresh clone therefore needs the separately downloaded NASA ZIPs and the importer command above to reproduce real records; never commit the database or credentials.
 
 ---
 
@@ -90,14 +112,7 @@ To use real data:
 
 ## Quickstart — Docker
 
-```bash
-cp .env.example .env
-# Edit .env with FIRMS_MAP_KEY and ADMIN_TOKEN
-# For public hosting also set APP_ENV=production
-docker compose up --build
-```
-
-Open http://localhost:8000. The app is portable to most container hosts. Configure TLS, persistent storage, authentication/rate limiting, and monitoring before public use.
+The one-command Docker start above runs locally on port 8765. For hosted deployment, configure TLS, persistent storage, authentication/rate limiting, and monitoring.
 
 ## API overview
 

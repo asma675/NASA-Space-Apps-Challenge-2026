@@ -19,29 +19,30 @@ function renderCalendar(timeline){const parent=$('calendar-grid');parent.replace
 function selectMonth(month){state.selectedMonth=month;document.querySelectorAll('.cal-cell').forEach(el=>el.classList.toggle('active',el.dataset.month===month));if(month){const x=state.analysis.timeline.find(t=>t.month===month);$('selected-month').textContent=`${months[Number(month.slice(5))-1]} ${month.slice(0,4)} — ${fmt(x.combined)} active grid-days`;$('selected-detail').textContent=`MODIS-only ${fmt(x.modis_only)} · VIIRS-only ${fmt(x.viirs_only)} · Matched ${fmt(x.both)}. Map shows a sample.`;}else{$('selected-month').textContent='All months selected';$('selected-detail').textContent='Map shows sampled observations across the date range.';}renderMap();}
 function drawFingerprint(items){const el=$('fingerprint');el.replaceChildren();const NS='http://www.w3.org/2000/svg',svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox','0 0 410 312');svg.setAttribute('role','img');svg.setAttribute('aria-label','12 month seasonal burning activity radar');const center=[205,156],outer=112,max=Math.max(...items.map(i=>i.average),1);function point(index,r){const a=index*Math.PI/6-Math.PI/2;return [center[0]+Math.cos(a)*r,center[1]+Math.sin(a)*r];}function shape(tag,attrs){const e=document.createElementNS(NS,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));svg.append(e);return e;}for(let level=1;level<=4;level++){const ring=[];for(let i=0;i<12;i++){const p=point(i,outer*level/4);ring.push(p.join(','));}shape('polygon',{points:ring.join(' '),fill:'none',stroke:'var(--line)','stroke-width':1});}for(let i=0;i<12;i++){const p=point(i,outer);shape('line',{x1:205,y1:156,x2:p[0],y2:p[1],stroke:'var(--line)','stroke-width':1});const tx=point(i,133),text=shape('text',{x:tx[0],y:tx[1]+3,'font-size':11,'text-anchor':'middle',fill:'var(--muted)','font-family':'DM Sans'});text.textContent=months[i];}const polygon=items.map((m,i)=>point(i,12+(outer-12)*m.average/max).join(',')).join(' ');shape('polygon',{points:polygon,fill:'#8c71f6','fill-opacity':'.22',stroke:'#a493ff','stroke-width':2.7,'stroke-linejoin':'round'});for(let i=0;i<12;i++){const p=point(i,12+(outer-12)*items[i].average/max);shape('circle',{cx:p[0],cy:p[1],r:3.5,fill:'#d7a2ff',stroke:'#7348c9','stroke-width':1});}el.append(svg);}
 // Public MapTiler browser keys are intended for client-side mapping. Restrict by allowed domains on MapTiler Cloud.
-function maptilerKey(){return (sessionStorage.getItem('blindspot-maptiler-key')||state.config?.maptiler_public_key||'').trim();}
+function maptilerKey(){return (state.config?.maptiler_public_key||'').trim();}
 function resolvedStyle(){return state.mapStyle==='auto'?(document.body.dataset.theme==='light'?'light':'dark'):state.mapStyle;}
-const BASEMAP_STYLES={dark:()=>L.MaptilerStyle.DATAVIZ.DARK,light:()=>L.MaptilerStyle.DATAVIZ.LIGHT,satellite:()=>L.MaptilerStyle.SATELLITE,hybrid:()=>L.MaptilerStyle.HYBRID};
+const BASEMAP_STYLES={dark:'dataviz-dark',light:'dataviz-light',satellite:'satellite-v2',hybrid:'hybrid'};
 function updateMapSource(source){state.mapProvider=source;const out=$('map-provider');if(out)out.textContent=source;const detail=$('map-status');if(detail){detail.textContent=source.startsWith('MapTiler')?'MapTiler geography · NASA FIRMS observation overlay':'Open map fallback · NASA FIRMS observation overlay';}}
 function applyBasemap(){
   if(!state.leaflet)return;
   const map=state.map,style=resolvedStyle(),key=maptilerKey();
   if(state.maptilerLayer){map.removeLayer(state.maptilerLayer);state.maptilerLayer=null;}
   if(state.baseFallback){map.removeLayer(state.baseFallback);state.baseFallback=null;}
-  // CARTO basemaps keep the interface functional even without a MapTiler account or WebGL.
-  const fallbackTheme=(style==='light'?'light_all':'dark_all');
-  state.baseFallback=L.tileLayer(`https://{s}.basemaps.cartocdn.com/${fallbackTheme}/{z}/{x}/{y}{r}.png`,{
-    subdomains:'abcd',maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+  // OpenStreetMap raster tiles are the no-key fallback. CARTO's basemap API now
+  // overlays an API-key-required watermark when no CARTO key is supplied.
+  state.baseFallback=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    subdomains:'abc',maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }).addTo(map);
-  updateMapSource('CARTO '+(style==='light'?'Light':'Dark')+' fallback');
-  if(key&&window.L.maptiler?.maptilerLayer&&window.L.MaptilerStyle){
-    try{
-      state.maptilerLayer=L.maptiler.maptilerLayer({apiKey:key,style:BASEMAP_STYLES[style](),language:'en'}).addTo(map);
-      // The raster fallback stays behind the vector map so loss of WebGL or failed tiles is not a blank screen.
-      updateMapSource('MapTiler '+({dark:'Dataviz Dark',light:'Dataviz Light',satellite:'Satellite',hybrid:'Satellite Hybrid'}[style]));
-      state.maptilerLayer.on?.('error',()=>{if(state.maptilerLayer){map.removeLayer(state.maptilerLayer);state.maptilerLayer=null;}updateMapSource('CARTO fallback (MapTiler unavailable)');});
-    }catch(error){state.maptilerLayer=null;updateMapSource('CARTO fallback (MapTiler unavailable)');console.warn('MapTiler unavailable, using CARTO map',error);}
-  }else if((style==='satellite'||style==='hybrid')&&!key){$('map-status').textContent='Satellite imagery requires a MapTiler key — open Data Studio';toast('To display real satellite imagery, add your MapTiler public key in Data Studio.');}
+  updateMapSource('OpenStreetMap fallback');
+  if(key){
+    // Use MapTiler's raster tiles directly through Leaflet. This avoids depending
+    // on the optional MapTiler Leaflet SDK adapter being present on the CDN.
+    const tileUrl=`https://api.maptiler.com/maps/${BASEMAP_STYLES[style]}/{z}/{x}/{y}.png?key=${encodeURIComponent(key)}`;
+    state.maptilerLayer=L.tileLayer(tileUrl,{maxZoom:20,attribution:'&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+    updateMapSource('MapTiler '+({dark:'Dataviz Dark',light:'Dataviz Light',satellite:'Satellite imagery',hybrid:'Satellite + labels'}[style]));
+    let failed=false;
+    state.maptilerLayer.once('tileerror',()=>{if(failed)return;failed=true;if(state.maptilerLayer){map.removeLayer(state.maptilerLayer);state.maptilerLayer=null;}updateMapSource('OpenStreetMap fallback · MapTiler tile request failed');});
+  }else if(style==='satellite'||style==='hybrid'){$('map-status').textContent='MapTiler key is missing; showing OpenStreetMap.';}
   if($('map-style'))$('map-style').value=state.mapStyle;
 }
 function initMap(){
@@ -76,7 +77,7 @@ function mapPoints(){const d=state.analysis;if(!d)return[];return d.points.filte
 function renderMap(){const d=state.analysis;if(!d)return;const points=mapPoints();$('map-count').textContent=`${fmt(points.length)} sampled observations · ${state.layer==='all'?'MODIS + VIIRS':state.layer}`;if(state.leaflet){const map=state.map;state.layers.clearLayers();if(state.mapRegion!==d.region.name){state.mapRegion=d.region.name;resetMapView();}for(const p of points){const c=p.family==='MODIS'?'#f9a765':'#a98bff';const label=`<strong>${escapeHTML(p.family)} observation</strong><br>UTC date: ${escapeHTML(p.date)}<br>Relationship: ${escapeHTML(p.category.replaceAll('_',' '))}<br>Origin: ${escapeHTML(p.origin)}<br><small>Detection, not verified individual wildfire.</small>`;L.circleMarker([p.latitude,p.longitude],{radius:5.5,color:c,fillColor:c,fillOpacity:.8,weight:1.4}).bindPopup(label,{maxWidth:270}).addTo(state.layers);}return;}
     // Offline map fallback: use an SVG projection of the region, never an invented basemap.
     const el=$('map');el.replaceChildren();el.style.background='radial-gradient(circle at 20% 40%,#234b5a,#12283a 60%,#0e1f30)';let svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 600 365');svg.setAttribute('width','100%');svg.setAttribute('height','100%');const [w,s,e,n]=d.region.bbox;const make=(tag,attrs)=>{const x=document.createElementNS('http://www.w3.org/2000/svg',tag);Object.entries(attrs).forEach(([k,v])=>x.setAttribute(k,v));svg.append(x);return x;};for(let i=0;i<12;i++){make('line',{x1:i*55,y1:0,x2:i*55,y2:365,stroke:'#486579','stroke-opacity':'.3'});}for(let i=0;i<8;i++){make('line',{x1:0,y1:i*52,x2:600,y2:i*52,stroke:'#486579','stroke-opacity':'.3'});}for(const p of points){make('circle',{cx:(p.longitude-w)/(e-w)*600,cy:(n-p.latitude)/(n-s)*365,r:3,fill:p.family==='MODIS'?'#f9a765':'#b296ff','fill-opacity':'.8'});}el.append(svg);}
-async function refreshConfig(){try{state.config=await api('/api/config');$('api-status').innerHTML='<i></i> API connected';$('api-status').classList.remove('down');$('key-status').textContent=state.config.firms_key_configured?'✓ FIRMS key is configured server-side.':'⚠ FIRMS key not configured. Add FIRMS_MAP_KEY to .env and restart the server.';updateMapKeyStatus();if(state.map&&maptilerKey()&&!state.maptilerLayer)applyBasemap();}catch(e){$('api-status').innerHTML='<i></i> API offline';$('api-status').classList.add('down');$('key-status').textContent='API unavailable';}}
+async function refreshConfig(){try{state.config=await api('/api/config');$('api-status').innerHTML='<i></i> API connected';$('api-status').classList.remove('down');if(state.map&&maptilerKey()&&!state.maptilerLayer)applyBasemap();}catch(e){$('api-status').innerHTML='<i></i> API offline';$('api-status').classList.add('down');}}
 function studioMessage(str,good){const el=$('studio-message');el.textContent=str;el.className='studio-message '+(good?'good':'error');}
 function getToken(){return $('admin-token').value;}
 async function ingest(){const b=$('ingest-button');b.disabled=true;studioMessage('Fetching NASA observations — this may take several requests…',true);try{const d=await api('/api/ingest/nasa',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Token':getToken()},body:JSON.stringify({region:$('region').value,start_date:$('ingest-start').value,end_date:$('ingest-end').value,products:['MODIS_SP','VIIRS_SNPP_SP']})});studioMessage(`Imported ${d.inserted} new observations across ${d.requests} NASA requests. Choose Real FIRMS and matching dates to explore.`,true);$('mode').value='real';$('start-date').value=$('ingest-start').value;$('end-date').value=$('ingest-end').value;await load();}catch(e){studioMessage('Import failed: '+e.message,false);}finally{b.disabled=false;}}
@@ -90,17 +91,9 @@ window.addEventListener('DOMContentLoaded',async()=>{
   document.querySelectorAll('[data-layer]').forEach(b=>b.addEventListener('click',()=>{state.layer=b.dataset.layer;document.querySelectorAll('[data-layer]').forEach(x=>x.classList.toggle('selected',x===b));renderMap();}));
   $('export-brief').addEventListener('click',()=>download('brief.md'));
   $('export-csv').addEventListener('click',()=>download('monthly.csv'));
-  $('data-studio-open').addEventListener('click',()=>{refreshConfig();$('modal').classList.remove('hidden');});
-  $('modal-close').addEventListener('click',()=>$('modal').classList.add('hidden'));
-  $('modal').addEventListener('click',e=>{if(e.target===$('modal'))$('modal').classList.add('hidden');});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape')$('modal').classList.add('hidden');});
-  $('ingest-button').addEventListener('click',ingest);
-  $('upload-button').addEventListener('click',upload);
   state.mapStyle=['auto','dark','light','satellite','hybrid'].includes(localStorage.getItem('blindspot-map-style'))?localStorage.getItem('blindspot-map-style'):'auto';
   $('map-style').value=state.mapStyle;
   $('map-style').addEventListener('change',e=>changeMapStyle(e.target.value));
   $('map-reset').addEventListener('click',resetMapView);
-  $('save-map-key').addEventListener('click',saveMapKey);
-  $('clear-map-key').addEventListener('click',clearMapKey);
   initMap();await refreshConfig();await load();
 });
