@@ -276,3 +276,18 @@ NRCan annual composite burned-area polygons: https://cwfis.cfs.nrcan.gc.ca/downl
 - NBAC: documented external source; not locally loaded.
 
 **Challenge framing:** the core deliverable is the historical burning-activity **calendar** and explainable common-cell-day comparison of MODIS/VIIRS. Contextual datasets are for triangulation and human decision-making. BLINDSPOT does not claim cross-sensor detection sensitivity calibration, wildfire ignition prediction, or operational fire alerts.
+
+---
+
+### 👩‍💻 Meet the Creators
+
+**Parallax BLINDSPOT** was created and developed by **Asma Ahmed and Ayaan Ahmed** for the NASA Space Apps Challenge 2026.
+
+- **Asma Ahmed** — [LinkedIn](https://www.linkedin.com/in/asma-ahmed67/)
+- **Ayaan Ahmed** — [LinkedIn](https://linkedin.com/in/ayaanahmed05)
+
+🚀 **We're open to Winter and Summer internship opportunities!**
+
+We're passionate about software engineering, artificial intelligence, geospatial technology, and building solutions that make a real-world impact. We'd love to connect with teams working on innovative technologies.
+
+**© 2026 Asma Ahmed & Ayaan Ahmed. All rights reserved, subject to the repository's open-source license.**
