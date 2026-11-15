@@ -10,7 +10,7 @@ let toastTimer;
 function toast(message){const el=$('toast');el.textContent=message;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),4000);}
 async function api(url,opts){const resp=await fetch(url,opts);if(!resp.ok){let msg=`HTTP ${resp.status}`;try{const d=await resp.json();msg=d.detail||msg;}catch{}throw new Error(msg);}return resp.json();}
 function setTheme(theme){document.body.dataset.theme=theme;$('theme-button').textContent=theme==='dark'?'☀':'☾';localStorage.setItem('blindspot-theme',theme);if(state.map){if(state.mapStyle==='auto') applyBasemap();setTimeout(()=>state.map.invalidateSize(),150);}}
-function updateDataBanner(mode,records){const demo=mode==='demo',b=$('data-banner');b.classList.toggle('real',!demo);$('data-title').textContent=demo?'ILLUSTRATIVE DATA — NOT NASA':'REAL-DATA MODE — VERIFY PROVENANCE';$('data-message').textContent=demo?'Synthetic records demonstrate product interactions only. All counts and locations are fictitious.':'Genuine NASA FIRMS records. The bundled archive covers Alberta 2023 only; World searches loaded records, not complete worldwide history. Cell-day alignment is not calibrated sensor sensitivity or a current fire alert.';if(!records){$('data-message').textContent += ' There are no matching records for the selected region and dates.';}}
+function updateDataBanner(mode,records){const demo=mode==='demo',b=$('data-banner');b.classList.toggle('real',!demo);$('data-title').textContent=demo?'ILLUSTRATIVE DATA — NOT NASA':'REAL-DATA MODE — VERIFY PROVENANCE';$('data-message').textContent=demo?'Synthetic records demonstrate product interactions only. All counts and locations are fictitious.':'Real NASA FIRMS observations: World November 2025–November 2026 plus Alberta May–October 2023. Near-real-time months are provisional. A 10-km day alignment is NOT a validated sensor calibration or confirmed wildfire count.';if(!records){$('data-message').textContent += ' There are no matching records for the selected region and dates.';}}
 function download(kind){window.location.assign('/api/export/'+kind+'?'+params());}
 async function load(){const button=$('analyze-button');button.disabled=true;button.textContent='Analyzing…';try{const d=await api('/api/analysis?'+params());state.analysis=d;state.selectedMonth=null;render(d);if(!d.loaded_observations)toast('No matching records. Import NASA data in Data Studio or switch to illustrative mode.');}catch(e){toast('Analysis failed: '+e.message);}finally{button.disabled=false;button.innerHTML='Analyze region <span>↗</span>';}}
 function render(d){const s=d.summary;updateDataBanner(d.mode,d.loaded_observations);$('m-combined').textContent=fmt(s.combined);$('m-both').textContent=fmt(s.both);$('m-viirs').textContent=fmt(s.viirs_only);$('m-overlap').textContent=s.sensor_agreement_pct+'%';$('bar-m-value').textContent=fmt(s.modis_only);$('bar-v-value').textContent=fmt(s.viirs_only);$('bar-b-value').textContent=fmt(s.both);const max=Math.max(s.modis_only,s.viirs_only,s.both,1);$('bar-m').style.width=100*s.modis_only/max+'%';$('bar-v').style.width=100*s.viirs_only/max+'%';$('bar-b').style.width=100*s.both/max+'%';$('data-context').textContent=`${d.region.name} · ${d.start} to ${d.end}`;$('atlas-coverage-desc').textContent=d.coverage_note||'Archived data need geographical source verification.';$('brief-headline').textContent=s.headline;$('brief-explanation').textContent=s.explanation;$('brief-months').textContent=s.combined?`Review ${s.peak_months.join(', ')} first, then cross-check with official regional fire history and forecasts.`:'Load more historical observations before prioritizing seasonal monitoring.';$('brief-overlap').textContent=`${fmt(s.modis_only)} MODIS-only, ${fmt(s.viirs_only)} VIIRS-only, and ${fmt(s.both)} matched active grid-days. Overlap is not proof of accuracy.`;renderCalendar(d.timeline);drawFingerprint(d.seasonal);renderMap();renderSeasonalWatch(d);renderGlobePoints(d);window.dispatchEvent(new CustomEvent("blindspot:analysis-ready",{detail:d}));}
@@ -140,7 +140,7 @@ function clearMapKey(){sessionStorage.removeItem('blindspot-maptiler-key');$('ma
 function updateMapKeyStatus(){const el=$('maptiler-status');if(!el)return;const browser=!!sessionStorage.getItem('blindspot-maptiler-key'),server=!!state.config?.maptiler_key_configured;el.textContent=browser?'✓ Browser MapTiler key active for this tab':server?'✓ Server MapTiler key configured':'MapTiler key not configured; OpenStreetMap and Esri maps remain available.';}
 
 function mapPoints(){const d=state.analysis;if(!d)return[];return d.points.filter(p=>(!state.selectedMonth||p.date.startsWith(state.selectedMonth))&&(state.layer==='all'||state.layer===p.family||(state.layer==='exclusive'&&p.category!=='matched')));}
-function renderMap(){const d=state.analysis;if(!d)return;const points=mapPoints();$('map-count').textContent=`${fmt(points.length)} sampled observations · ${state.layer==='all'?'MODIS + VIIRS':state.layer}`;if(state.leaflet){const map=state.map;state.layers.clearLayers();if(state.mapRegion!==d.region.name){state.mapRegion=d.region.name;resetMapView();}for(const p of points){const c=p.family==='MODIS'?'#f9a765':'#a98bff';const label=`<strong>${escapeHTML(p.family)} observation</strong><br>UTC date: ${escapeHTML(p.date)}<br>Relationship: ${escapeHTML(p.category.replaceAll('_',' '))}<br>Origin: ${escapeHTML(p.origin)}<br><small>Detection, not verified individual wildfire.</small>`;// Glowing rings echo Wildfire Watch's satellite marker treatment without asserting a verified fire location.
+function renderMap(){const d=state.analysis;if(!d)return;const points=mapPoints();$('map-count').textContent=`${fmt(points.length)} sampled observations · ${state.layer==='all'?'MODIS + VIIRS':state.layer}`;if(state.leaflet){const map=state.map;state.layers.clearLayers();if(state.mapRegion!==d.region.name){state.mapRegion=d.region.name;resetMapView();}for(const p of points){const c=p.family==='MODIS'?'#f9a765':'#a98bff';const label=`<strong>${escapeHTML(p.family)} ${p.cell_records?'cell-day representative':'observation'}</strong><br>UTC date: ${escapeHTML(p.date)}<br>Relationship: ${escapeHTML(p.category.replaceAll('_',' '))}<br>Origin: ${escapeHTML(p.origin)}<br>${p.cell_records?'<small>Approximate map position within the 10-km cell. Not an original full-resolution detection coordinate.</small><br>':''}<small>Detection, not verified individual wildfire.</small>`;// Glowing rings echo Wildfire Watch's satellite marker treatment without asserting a verified fire location.
       if(state.mapGlow){L.circleMarker([p.latitude,p.longitude],{radius:10,color:c,fillColor:c,fillOpacity:.17,weight:0,interactive:false}).addTo(state.layers);}
       L.circleMarker([p.latitude,p.longitude],{radius:4.6,color:'#ffffff',fillColor:c,fillOpacity:.92,weight:.65,opacity:.75})
         .bindPopup(label,{maxWidth:270}).addTo(state.layers);}return;}
@@ -200,7 +200,7 @@ function renderSeasonalWatch(d){
     box.innerHTML='<div class="watch-placeholder">Demo mode uses synthetic data. Switch to <strong>Real FIRMS records</strong> for evidence-based seasonal signals.</div>';
     return;
   }
-  if(!d.loaded_observations){box.innerHTML='<div class="watch-placeholder">No historical observations match your date and region. Select Alberta 2023 or import NASA data.</div>';return;}
+  if(!d.loaded_observations){box.innerHTML='<div class="watch-placeholder">No observations match this range. Select World · June 2026 or Alberta 2023; a gap never proves no fires.</div>';return;}
   const peak=d.seasonal.filter(x=>x.total>0).sort((a,b)=>b.total-a.total).slice(0,2);
   const overlap=stats.sensor_agreement_pct;
   const top=peak[0];
@@ -424,6 +424,9 @@ async function checkGlobalFeed(){
 function changeAtlasRegion(){
   const region=$('atlas-region').value;
   $('region').value=region;
+  if($('start-date').value<'2025-01-01' && region!=='alberta_province'){
+    $('start-date').value='2026-06-01';$('end-date').value='2026-06-30';
+  }
   // The World FIRMS endpoint supports only one day to reduce resource load.
   if(region==='world')$('atlas-days').value='1';
   if(state.atlasLayers)state.atlasLayers.clearLayers();
@@ -439,8 +442,14 @@ window.addEventListener('DOMContentLoaded',async()=>{
   $('atlas-region').addEventListener('change',changeAtlasRegion);
   $('atlas-check').addEventListener('click',checkGlobalFeed);
   $('atlas-view').addEventListener('click',()=>{changeAtlasRegion();load();$('reveal').scrollIntoView({behavior:'smooth',block:'start'});});
+  const preset=(r,a,b)=>{$('region').value=r;$('atlas-region').value=r;$('start-date').value=a;$('end-date').value=b;$('mode').value='real';
+    document.querySelectorAll('.world-case-switch button').forEach(el=>el.classList.remove('selected'));
+    $('preset-'+(r==='world'?'world':'alberta')).classList.add('selected');
+    window.BLINDSPOT_BBOX=null;refreshAtlasInventory(r);load();};
+  $('preset-world')?.addEventListener('click',()=>preset('world','2026-06-01','2026-06-30'));
+  $('preset-alberta')?.addEventListener('click',()=>preset('alberta_province','2023-05-01','2023-10-31'));
   $('mode').addEventListener('change',load);
-  $('region').addEventListener('change',()=>{$('atlas-region').value=$('region').value;if(state.atlasLayers)state.atlasLayers.clearLayers();$('atlas-recent-total').textContent='Not checked';$('atlas-recent-source').textContent='Choose fire source, then Check NASA now';refreshAtlasInventory($('region').value);updateLiveMap([]);notifiedBaseline=null;setWatchBadge('NOT CHECKED');$('live-watch').innerHTML='<div class="watch-placeholder">Area changed. Click Check latest detections for this region.</div>';});
+  $('region').addEventListener('change',()=>{if($('region').value==='alberta_province'&&$('start-date').value>='2025-01-01'){$('start-date').value='2023-05-01';$('end-date').value='2023-10-31';}else if($('region').value!=='alberta_province'&&$('start-date').value<'2025-01-01'){$('start-date').value='2026-06-01';$('end-date').value='2026-06-30';}$('atlas-region').value=$('region').value;if(state.atlasLayers)state.atlasLayers.clearLayers();$('atlas-recent-total').textContent='Not checked';$('atlas-recent-source').textContent='Choose fire source, then Check NASA now';refreshAtlasInventory($('region').value);updateLiveMap([]);notifiedBaseline=null;setWatchBadge('NOT CHECKED');$('live-watch').innerHTML='<div class="watch-placeholder">Area changed. Click Check latest detections for this region.</div>';});
   $('clear-selection').addEventListener('click',()=>selectMonth(null));
   document.querySelectorAll('[data-layer]').forEach(b=>b.addEventListener('click',()=>{state.layer=b.dataset.layer;document.querySelectorAll('[data-layer]').forEach(x=>x.classList.toggle('selected',x===b));renderMap();}));
   $('export-brief').addEventListener('click',()=>download('brief.md'));
@@ -471,10 +480,15 @@ window.addEventListener('DOMContentLoaded',async()=>{
   initMap();bootGlobe();await refreshConfig();
   // Showcase the bundled *real* archive rather than landing judges on synthetic demo.
   const realCount=(state.config?.counts||[]).filter(x=>x.mode==='real').reduce((sum,x)=>sum+x.count,0);
-  if(realCount>0 && state.config?.regions?.alberta_province){
+  const hasWorld=(state.config?.counts||[]).some(x=>x.mode==='real'&&x.storage==='global_grid_index'&&x.count>0);
+  if(hasWorld){
+    $('region').value='world';$('mode').value='real';
+    $('start-date').value='2026-06-01';$('end-date').value='2026-06-30';
+    $('hero-data-count').textContent=`${fmt(realCount)} stored/indexed observations · World 2025–26 + Alberta 2023`;
+  }else if(realCount>0 && state.config?.regions?.alberta_province){
     $('region').value='alberta_province';$('mode').value='real';
     $('start-date').value='2023-05-01';$('end-date').value='2023-10-31';
-    $('hero-data-count').textContent=`${fmt(realCount)} archived detections · Alberta 2023`;
+    $('hero-data-count').textContent=`${fmt(realCount)} observations · Alberta 2023`;
   }else{$('hero-data-count').textContent='Data connection needed';}
   await load();
   $('atlas-region').value=$('region').value;await refreshAtlasInventory($('region').value);

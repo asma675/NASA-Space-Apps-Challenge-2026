@@ -30,7 +30,7 @@ def test_world_region_and_isolated_coverage(client):
     world=client.get('/api/analysis?region=world&start=2023-06-01&end=2023-06-30&mode=real').json()
     assert world['loaded_observations']==2
     assert world['timeline'][0]['coverage']=='unverified'
-    assert 'not a global archive' in world['coverage_note'].lower()
+    assert 'alberta' in world['coverage_note'].lower() and '2023' in world['coverage_note'].lower()
     assert 'Equal Earth' in world['methodology']['grid']
     inv=client.get('/api/investigation?region=world&start=2023-06-01&end=2023-06-30&mode=real').json()
     assert inv['totals']['both']==1

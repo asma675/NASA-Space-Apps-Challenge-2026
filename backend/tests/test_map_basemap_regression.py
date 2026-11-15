@@ -16,5 +16,5 @@ def test_keyless_map_and_cache_bust():
     html = (FRONT / "index.html").read_text(encoding="utf-8")
     assert "https://tile.openstreetmap.org/{z}/{x}/{y}.png" in code
     assert "blindspot-osm-dark" in code
-    assert "v=observatory-20261115" in html
+    assert "v=world-20261115b" in html
     assert "maptiler.maptilerLayer" in code

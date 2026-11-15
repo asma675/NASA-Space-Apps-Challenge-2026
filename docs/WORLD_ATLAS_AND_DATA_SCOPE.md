@@ -1,3 +1,9 @@
+# UPDATE: NASA FIRMS World datasets are now embedded (2025–2026)
+
+The previous text below describes the pre-import release. **It is outdated for this edition**. See [WORLD_DATA_2025_2026.md](WORLD_DATA_2025_2026.md) for verified archive inventory, dates, source processing, data-quality filters and scientific limitations. The new worldwide archives contain 20,659,624 raw records, indexed to 5,708,602 UTC 10-km grid-days. World navigation now has real data for the documented period, but **not** a multi-decade worldwide baseline.
+
+---
+
 # BLINDSPOT World Atlas — data scope and NASA FIRMS selections
 
 **World mode is implemented. Complete worldwide historical data is NOT embedded.**

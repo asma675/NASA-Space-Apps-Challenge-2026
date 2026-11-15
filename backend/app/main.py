@@ -18,6 +18,7 @@ from .watch import live_watch
 from .canada import agency_context, import_agency_csv
 from .investigation import investigate, agency_match, _history
 from .global_explorer import archive_inventory, latest_hotspots, LIVE_SOURCES
+from .global_data import ready as world_ready, global_analysis, global_inventory, global_investigation, global_history, FIRST as GLOBAL_FIRST, LAST as GLOBAL_LAST, combine_archives
 
 ROOT=Path(__file__).resolve().parents[2]
 FRONTEND=ROOT/"frontend"
@@ -59,11 +60,23 @@ def validate_params(region, start, end, mode):
 def health():
     return {"status":"ok","service":"BLINDSPOT API"}
 
+def display_counts():
+    result=counts()
+    if world_ready():
+        import json
+        try:
+            manifest=json.loads((ROOT/'data'/'global_archive_manifest.json').read_text(encoding='utf-8'))
+            for product,num in manifest['eligible_by_processing'].items():
+                result.append({'mode':'real','product':product,'origin':'NASA FIRMS World #850371/#850372: indexed 10-km grid-days; original individual observations remain in data/raw ZIPs',
+                   'count':num,'storage':'global_grid_index','provisional':product.endswith('_NRT')})
+        except (OSError,ValueError,KeyError):pass
+    return result
+
 @app.get("/api/config")
 def config():
     return {"regions":REGIONS,"firms_key_configured":bool(os.getenv("FIRMS_MAP_KEY")),
             "admin_token_required":bool(os.getenv("ADMIN_TOKEN")),"maptiler_key_configured":bool(os.getenv("MAPTILER_API_KEY")),
-            "maptiler_public_key":os.getenv("MAPTILER_API_KEY", ""),"counts":counts(),
+            "maptiler_public_key":os.getenv("MAPTILER_API_KEY", ""),"counts":display_counts(),
             "method":"Projected cell-day presence. Not calibrated for orbital/observational differences."}
 
 def parse_focus_bbox(value: str, region: str):
@@ -89,6 +102,16 @@ def cached_analysis(db_path_string: str, db_mtime_ns: int, region: str, start: s
         meta['bbox']=list(focus_bbox)
         meta['name']='Custom focus · '+meta['name']
         meta['center']=[(focus_bbox[1]+focus_bbox[3])/2,(focus_bbox[0]+focus_bbox[2])/2]
+    if mode=='real' and world_ready() and end >= GLOBAL_FIRST:
+        result=global_analysis(region,max(start,GLOBAL_FIRST),end,focus_bbox)
+        result['global_indexed']=True
+        if start<GLOBAL_FIRST:
+            older_end='2025-11-11'
+            old=analyze(get_rows(mode,region,start,older_end,custom_bbox=focus_bbox),meta,start,older_end,mode)
+            old['data_origin']='NASA FIRMS Alberta 2023 user-provided full-resolution historical archive'
+            old_coverage=_history(region,'real',focus_bbox)['complete']
+            result=combine_archives(old,result,start,end,old_coverage)
+        return result
     return analyze(get_rows(mode,region,start,end,custom_bbox=focus_bbox),meta,start,end,mode)
 
 
@@ -103,6 +126,8 @@ def analysis(region: str="northern_ontario", start: str="2021-01-01", end: str="
     validate_params(region,start,end,mode)
     focus=parse_focus_bbox(bbox,region)
     result=compute_analysis(region,start,end,mode,focus)
+    if result.get('global_indexed'):
+        return result
     if mode=='real':
         covered=_history(region,'real',focus)['complete']
         for item in result['timeline']:
@@ -123,9 +148,9 @@ def analysis(region: str="northern_ontario", start: str="2021-01-01", end: str="
     result["data_origin"]="ILLUSTRATIVE SYNTHETIC DATA — NOT NASA" if mode=="demo" else "NASA FIRMS API or user-imported FIRMS-format CSV; verify provenance"
     if mode=='real':
         result['coverage_note']=(
-            'WORLD VIEW IS NOT A GLOBAL ARCHIVE: only Alberta 2023 is preloaded. Other regions need imported NASA archives; the global map shows only the records actually stored. Dates outside a documented source-area window must not be interpreted as zero fires.'
+            'For dates in 2023, the imported records cover only Alberta; the separate worldwide archive begins November 2025. Never treat the 2023 Alberta observations as worldwide coverage or infer zero fires elsewhere.'
             if region=='world' else
-            'Only Alberta May–October 2023 is preloaded. This region may have no historical archive until its source data are imported.'
+            'Alberta May–October 2023 and worldwide November 2025–November 2026 archives are imported separately. Coverage outside these source windows is unknown, never evidence of no fire.'
             if REGIONS[region].get('grid_projection')=='global' else
             'Alberta May–October 2023 is preloaded; regional coverage requires source archive verification.')
     result["truncated"]=False  # Streaming full-source aggregation; no silent cap.
@@ -134,7 +159,16 @@ def analysis(region: str="northern_ontario", start: str="2021-01-01", end: str="
 @app.get('/api/global/coverage')
 def global_coverage(region: str='world'):
     if region not in REGIONS:raise HTTPException(400,'Unknown geographic region')
-    return archive_inventory(region)
+    result=archive_inventory(region)
+    newer=global_inventory(region)
+    if newer:
+        result['records'].extend(newer['records'])
+        result['total_records']+=newer['total_records']
+        result['documented_coverage'].extend(newer['documented_coverage'])
+        result['global_index_grid_day_cells']=newer['grid_day_cells']
+        result['note']='Original Alberta 2023 archive (full-resolution) plus NASA FIRMS World 2025–2026 files (exact 10-km/day materialized index; original ZIPs preserved). Recent NRT products are provisional; no multi-decade global coverage is claimed.'
+        result['global_archive_complete']=False
+    return result
 
 @app.get('/api/global/latest')
 def global_latest(region: str='world', source: str='VIIRS_SNPP_NRT', days: int=1):
@@ -142,6 +176,41 @@ def global_latest(region: str='world', source: str='VIIRS_SNPP_NRT', days: int=1
         raise HTTPException(400,'Choose a supported region, FIRMS NRT source, and a 1–5 day window')
     try:return JSONResponse(latest_hotspots(region,source,days),headers={'Cache-Control':'no-store'})
     except ValueError as exc:raise HTTPException(400,str(exc)) from None
+
+def compute_investigation(region,start,end,mode,month='',focus=None):
+    if mode!='real' or not world_ready() or end<GLOBAL_FIRST:
+        return investigate(region,start,end,mode,month,focus)
+    if month and month+'-31'<GLOBAL_FIRST:
+        return investigate(region,start,min(end,'2025-11-11'),mode,month,focus)
+    world=global_investigation(region,max(start,GLOBAL_FIRST),end,month if month else '',focus)
+    if start>=GLOBAL_FIRST or month:
+        return world
+    # Distinct date windows: merge full-resolution Alberta 2023 and indexed global 2025–26.
+    older=investigate(region,start,'2025-11-11',mode,'',focus)
+    out=world.copy()
+    keys=('modis_only','viirs_only','both','modis','viirs','union')
+    out['totals']={k:older['totals'][k]+world['totals'][k] for k in keys}
+    out['overlap_pct']=round(100*out['totals']['both']/out['totals']['union'],1) if out['totals']['union'] else None
+    out['cells']=(older['cells'][:250]+world['cells'][:600])[:850]
+    out['displayed_cells']=len(out['cells'])
+    out['total_cells']=None
+    out['start']=start
+    out['monthly']=older['monthly']+world['monthly']
+    out['quality']={'raw_records':None,
+      'presumed_vegetation':older['quality']['presumed_vegetation']+world['quality']['presumed_vegetation'],
+      'excluded_other_types':None,
+      'unclassified':older['quality']['unclassified']+world['quality']['unclassified'],
+      'included_in_analysis':older['quality']['included_in_analysis']+world['quality']['included_in_analysis'],
+      'rule':'Two separate archive periods and geographic footprints; source raw totals documented in global and Alberta manifests.'}
+    out['historical_months']=older['historical_months']+world['historical_months']
+    combined_covered=set(older['complete_months'])|set(world['complete_months'])
+    out['complete_months']=sorted(combined_covered)
+    out['historical_years']=sorted({int(m[:4]) for m in combined_covered})
+    from .investigation import _anomalies,_calibration
+    out['anomalies']=_anomalies(out['historical_months'],combined_covered)
+    out['calibration']=_calibration(out['historical_months'],combined_covered)
+    out['methodology']['coverage']='MIXED SCOPE: 2023 only Alberta; 2025–26 World. Not directly comparable years.'
+    return out
 
 @app.get("/api/investigation")
 def investigation(region: str="alberta_province", start: str="2023-05-01",
@@ -153,7 +222,7 @@ def investigation(region: str="alberta_province", start: str="2023-05-01",
             raise HTTPException(400,"Invalid selected month")
         if not (start[:7] <= month <= end[:7]):
             raise HTTPException(400,"Selected month is outside date range")
-    return investigate(region,start,end,mode,month,focus)
+    return compute_investigation(region,start,end,mode,month,focus)
 
 @app.get("/api/investigation/agency-match")
 def investigation_agency_match(region: str="alberta_province", year: int=2023,
@@ -235,10 +304,8 @@ def export_brief(region: str="northern_ontario", start: str="2021-01-01", end: s
     lines.extend("- "+x for x in result["methodology"]["limitations"])
     if mode=='real' and REGIONS[region].get('grid_projection')=='global':
         lines.extend(['','## Geographic coverage disclosure',
-          ('WORLD VIEW IS NOT A WORLD ARCHIVE: only Alberta May–October 2023 is bundled; no full-Earth historical coverage is established.'
-           if region=='world' else
-           'Real archive completeness for the selected geographic region must be verified independently. The bundled real ZIPs cover Alberta only.'),
-          'Global Equal Earth EPSG:8857 10-km cells are used for every region in this edition; old Canada-grid counts will differ.'])
+          (result.get('coverage_note') or 'Available imported data cover Alberta 2023 and World November 2025–November 2026 only.'),
+          'Global Equal Earth EPSG:8857 10-km cells are used for every region; old Canada-grid figures are not directly comparable.'])
     if mode == 'real' and region in ('alberta_province', 'alberta_boreal') and start[:4] == end[:4]:
         agency = agency_context(int(start[:4]))
         lines.extend(['', '## Independent Canadian agency context (NOT satellite counts)'])
@@ -252,14 +319,14 @@ def export_brief(region: str="northern_ontario", start: str="2021-01-01", end: s
             lines.append('Official Alberta incident CSV NOT IMPORTED. No number of agency-confirmed fires or time delay can be inferred.')
         lines.append('Official record: https://open.canada.ca/data/en/dataset/a221e7a0-4f46-4be7-9c5a-e29de9a3447e')
     if mode=='real':
-        evidence=investigate(region,start,end,mode,custom_bbox=focus)
+        evidence=compute_investigation(region,start,end,mode,focus=focus)
         quality=evidence['quality']
         years=evidence['historical_years']
         lines.extend(['', '## Data-quality gate',
-            f"Raw observations in selected period: {quality['raw_records']:,}.",
-            f"NASA type-0 presumed vegetation observations included: {quality['presumed_vegetation']:,}.",
-            f"Non-vegetation/static/offshore/volcanic source types excluded: {quality['excluded_other_types']:,}.",
-            f"Unclassified observations retained but reported separately: {quality['unclassified']:,}.",
+            f"Raw observation count in selected period: {quality['raw_records']:,}." if quality['raw_records'] is not None else 'Raw individual observations remain in supplied ZIPs; the active grid index stores filtered counts.',
+            f"NASA type-0 standard-processing observations: {quality['presumed_vegetation']:,}.",
+            f"Non-vegetation/static/offshore/volcanic source types excluded: {quality['excluded_other_types']:,}." if quality['excluded_other_types'] is not None else 'Excluded source type counts are documented for the whole World archive in the global archive manifest.',
+            f"NRT records without fire type (included provisionally): {quality['unclassified']:,}.",
             'Type 0 is not a confirmed wildfire. Confirm incident status with the relevant fire management agency.',
             '', '## Blindspot investigation',
             f"Selected grid-days: {evidence['totals']['union']:,}; MODIS-only: {evidence['totals']['modis_only']:,}; VIIRS-only: {evidence['totals']['viirs_only']:,}; both: {evidence['totals']['both']:,}.",
@@ -291,11 +358,11 @@ def export_monthly(region: str="northern_ontario", start: str="2021-01-01", end:
     validate_params(region,start,end,mode)
     focus=parse_focus_bbox(bbox,region)
     result=compute_analysis(region,start,end,mode,focus)
-    if mode=='real':
+    if mode=='real' and not result.get('global_indexed'):
         covered=_history(region,'real',focus)['complete']
         for item in result['timeline']:
             item['coverage']='complete' if item['month'] in covered else 'unverified'
-    else:
+    elif mode!='real':
         for item in result['timeline']:item['coverage']='synthetic_demo'
     stream=io.StringIO()
     writer=csv.DictWriter(stream,fieldnames=list(result["timeline"][0].keys()))

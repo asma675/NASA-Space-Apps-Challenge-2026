@@ -153,3 +153,10 @@ body[data-theme=light] .world-atlas{background:linear-gradient(125deg,#192846,#2
    scale, control text, popups, attribution, or the 3-D globe. */
 .blindspot-osm-dark .leaflet-tile{filter:invert(1) hue-rotate(180deg) brightness(.78) contrast(.93) saturate(.78)}
 .blindspot-osm-light .leaflet-tile{filter:none}
+
+/* NASA Global archive switch: legible, unobtrusive and keyboard-operable. */
+.world-case-switch{display:flex;align-items:center;flex-wrap:wrap;gap:9px;margin:12px 0 22px;padding:12px 16px;background:rgba(14,35,49,.55);border:1px solid rgba(129,176,188,.18);border-radius:14px}
+.world-case-switch>span{font-size:10px;font-weight:800;letter-spacing:.14em;color:#b2d0d9;margin-right:5px}
+.world-case-switch button{padding:9px 12px;border:1px solid rgba(146,179,196,.25);background:rgba(30,62,75,.35);color:#bcd6dc;border-radius:999px;font:inherit;font-size:11px;font-weight:650;cursor:pointer;transition:background .2s,border-color .2s}
+.world-case-switch button:hover,.world-case-switch button.selected{background:rgba(102,207,191,.18);border-color:#78d5bc;color:#f3fffc}
+.world-case-switch small{font-size:10px;color:#9ab8bd}

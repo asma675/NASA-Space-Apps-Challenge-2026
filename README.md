@@ -1,3 +1,27 @@
+# Parallax BLINDSPOT — Observatory Experience / NASA World 2025–2026 Update
+
+**Current complete edition:** The original observatory story, Globe, Blindspot Reveal, historical calendar, Watchtower, Canadian evidence, and seasonal brief are preserved. New NASA global data are already bundled; no API key or manual ZIP extraction is needed.
+
+- World requests **#850371 MODIS C6.1** and **#850372 VIIRS S-NPP C2**: **20,659,624 original rows** in two preserved ZIP files. Dates cover parts of **November 12, 2025 to November 13, 2026** (S-NPP VIIRS NRT through November 2, 2026).
+- **19,573,939 eligible records** indexed into **5,708,602 unique 10-km Equal Earth UTC grid-days**; standard-processing `type=1/2/3` excluded; NRT (no type field) labeled provisional/unclassified.
+- Separate full-resolution Alberta 2023 archive: **547,021 raw records**, kept in `data/blindspot.sqlite3` with original source ZIPs.
+- **World June 2026** is the recommended default; both sensors then have standard-processing data. Choose **Alberta 2023** from the one-click case-study control to see the prior record and Canada Evidence Lab.
+- A global 2025–26 archive does **not** provide a multi-decade trend or validated sensor calibration. The two scopes are never misrepresented as one comparable climate baseline.
+
+**Start on Windows:**
+
+```powershell
+cd "C:\Users\asmaa\Downloads\Parallax_BLINDSPOT_Observatory_World_Data"
+py -m pip install -r backend/requirements.txt
+py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
+```
+
+Open **http://127.0.0.1:8765** for the animated observatory story, or **http://127.0.0.1:8765/explore** for the worldwide NASA comparison.
+
+Full provenance and limitations: [`docs/WORLD_DATA_2025_2026.md`](docs/WORLD_DATA_2025_2026.md). The older README sections below describe the **original Alberta-only edition**, before this global dataset was added.
+
+---
+
 # Parallax BLINDSPOT — Observatory Experience Edition
 
 An original immersive landing page and guided **Northern Watch House** narrative, with a distinct Parallax visual language (boreal greens, copper, field-guide typography and hand-drawn SVG observatory), plus a redesigned Explore front end. The earlier NASA analysis engine, comparison maps, source import, Watchtower, calendar, archive and evidence lab are preserved.

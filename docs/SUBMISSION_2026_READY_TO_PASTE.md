@@ -1,3 +1,7 @@
+> **NEW WORLD DATA EDITION:** The previous text below focuses on the earlier Alberta-only case study. For accurate November 2025–November 2026 worldwide data numbers, dates and science limitations, use [GLOBAL_JUDGE_PITCH.md](GLOBAL_JUDGE_PITCH.md) and [WORLD_DATA_2025_2026.md](WORLD_DATA_2025_2026.md).
+
+---
+
 # NASA Space Apps Challenge 2026 — Submission copy for Parallax BLINDSPOT
 
 **Verify all links and team details before submitting.** These are edited drafts, not an actual Space Apps submission. All online judges must be able to open links without login. Team members' names have intentionally not been invented.

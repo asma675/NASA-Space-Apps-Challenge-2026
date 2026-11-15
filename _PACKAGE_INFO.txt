@@ -1,0 +1,7 @@
+Edition: compact
+World NASA FIRMS request IDs: MODIS 850371; VIIRS S-NPP 850372
+Raw source rows: 20,659,624
+Indexed eligible source rows: 19,573,939
+Grid-days: 5,708,602
+Alberta 2023 legacy raw records: 547,021
+See START_HERE.txt and docs/WORLD_DATA_2025_2026.md

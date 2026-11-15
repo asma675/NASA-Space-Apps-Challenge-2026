@@ -20,7 +20,7 @@
   if(count||proof){
     fetch('/api/config').then(r=>{if(!r.ok)throw Error('Offline');return r.json();}).then(d=>{
       const n=(d.counts||[]).filter(x=>x.mode==='real').reduce((s,x)=>s+Number(x.count||0),0);
-      if(count)count.textContent=n?n.toLocaleString('en-CA')+' SOURCE OBSERVATIONS':'No real archive loaded';
+      if(count)count.textContent=n?n.toLocaleString('en-CA')+' NASA ARCHIVE RECORDS INDEXED/STORED':'No real archive loaded';
       if(proof)proof.textContent=n?n.toLocaleString('en-CA'):'Archive not loaded';
     }).catch(()=>{if(count)count.textContent='Open Explore to verify';if(proof)proof.textContent='Archive offline';});
   }
@@ -30,7 +30,7 @@
     {chapter:'SCENE 01 / THE PERSON',title:'Meet Maya.',deck:'A preparedness analyst with a difficult question.',body:'Maya reviews historical burning patterns before her team plans where to focus monitoring. She has a mountain of satellite observations, but a hotspot is not a verified fire—and a single map is only part of the story.',label:'HER QUESTION',evidence:'Where were the historically active periods, and how complete is the evidence?',room:'01 / AN ANALYST AT WORK'},
     {chapter:'SCENE 02 / THE INSTRUMENTS',title:'Two eyes. Two records.',deck:'MODIS and VIIRS both watch Earth—differently.',body:'MODIS offers a longer-running, coarser record. VIIRS can detect smaller thermal features. Because their observations differ, simply adding their hotspot counts together would be misleading. We first compare both on the same place-and-day grid.',label:'THE METHOD',evidence:'A 10-km projected cell on a UTC day counts once for each sensor that reported a hotspot.',room:'02 / SATELLITES DO NOT SEE IDENTICALLY'},
     {chapter:'SCENE 03 / THE REVEAL',title:'Reveal the gap.',deck:'A disagreement is a clue—not a failure verdict.',body:'The evidence desk separates MODIS-only, VIIRS-only and both-sensor cell-days. A draggable map shows the contrast. Different detections may reflect overpass timing, cloud cover, sensitivity or burning activity; missing detections are not proof a satellite missed a wildfire.',label:'THE INVESTIGATION',evidence:'Select a month. Drag the divider. Reveal mismatches. Draw a smaller study area.',room:'03 / COMPARE WHAT WAS ACTUALLY OBSERVED'},
-    {chapter:'SCENE 04 / THE DECISION',title:'See beyond the dots.',deck:'Now Maya can act on evidence—with its limits visible.',body:'She investigates the most active months in Alberta’s archived 2023 season, cross-checks independent agency records where available, and exports a readiness brief. The app tells her when several historical years are missing, instead of inventing a trend or a prediction.',label:'THE NEXT STEP',evidence:'Open BLINDSPOT Explore to investigate 547,021 archived observations and their scientific caveats.',room:'04 / OPEN THE EVIDENCE DESK'}
+    {chapter:'SCENE 04 / THE DECISION',title:'See beyond the dots.',deck:'Now Maya can act on evidence—with its limits visible.',body:'She investigates the World 2025–26 observations or the Alberta 2023 case study, cross-checks independent agency records where available, and exports a readiness brief. The app tells her when several historical years are missing, instead of inventing a trend or a prediction.',label:'THE NEXT STEP',evidence:'Open BLINDSPOT Explore to examine more than 19 million eligible worldwide observations, plus the earlier Alberta case study and their scientific caveats.',room:'04 / OPEN THE EVIDENCE DESK'}
   ];
   const byId=id=>document.getElementById(id);
   let idx=0;

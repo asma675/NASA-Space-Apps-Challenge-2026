@@ -1,43 +1,41 @@
-PARALLAX BLINDSPOT — INVESTIGATION EDITION (Alberta 2023)
-======================================================
+PARALLAX BLINDSPOT — WORLD DATA OBSERVATORY EDITION
+====================================================
 
-COMPLETE EDITION HAS NASA DATA EMBEDDED — NO REIMPORT REQUIRED
-  Source observations: 547,021 total (MODIS 90,039; VIIRS 456,982)
-  After NASA type filter: 542,775 presumed vegetation-fire detections
-  Excluded as static/offshore/etc: 4,246 tagged records
-  Source files: data/raw/ (original ZIPs, unzipping NOT required)
-  Database: data/blindspot.sqlite3
+NO NASA KEY REQUIRED TO EXPLORE THE DOWNLOADED HISTORICAL/NRT ZIP DATA
 
-WINDOWS FIRST TIME
-  1. Extract the complete zip, open its extracted folder in VS Code.
-  2. Run: py -m pip install -r backend/requirements.txt
-  3. Run: py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
-  4. Open: http://127.0.0.1:8765
-  5. Hard refresh browser with Ctrl + Shift + R.
+WORLD DATA — NASA FIRMS request #850371 (MODIS C6.1) and #850372 (VIIRS S-NPP C2)
+  2025-11-12 to 2026-11-13 (MODIS NRT) / 2026-11-02 (VIIRS NRT)
+  20,659,624 raw observations in original two NASA ZIPs
+  19,573,939 observations included in the global grid/day comparison:
+     Standard archives: type=0 presumed vegetation (other NASA type flags excluded)
+     NRT: no type field, explicitly included as provisional/unclassified
+  5,708,602 worldwide 10-km projected UTC grid-days in indexed database
 
-3-MINUTE LIVE DEMO
-  - Landing globe -> BLINDSPOT REVEAL -> drag divider -> REVEAL BLINDSPOTS
-  - Select Sep 2023 or Draw your area by clicking two map corners
-  - See counts for the selected area; reset area for 2023 full-season totals
-  - Show quality gate: excluded types do not enter the main burn calendar
-  - Anomaly and calibration panels honestly show that more years are required
-  - Open Canada Evidence Lab and download the mission Readiness Brief
+ALBERTA CASE STUDY
+  May–Oct 2023: 547,021 original source records; 542,775 type=0
+  Full-resolution database is preserved in data/blindspot.sqlite3
 
-EXPECTED SCIENTIFICALLY FILTERED ALBERTA MAY-OCT 2023
-  MODIS-only: 1,001 grid-days
-  VIIRS-only: 6,426 grid-days
-  BOTH: 8,751 grid-days
-  UNION: 16,178 grid-days
-  Co-observation: 54.1% (NOT accuracy)
+WINDOWS FIRST-TIME START
+  1. Extract the complete ZIP to Downloads; open extracted project root in VS Code.
+     If you see only one nested folder, open that folder (where backend/ exists).
+  2. py -m pip install -r backend/requirements.txt
+  3. py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
+  4. Open http://127.0.0.1:8765/
+  5. Explore at http://127.0.0.1:8765/explore
+  6. API check: http://127.0.0.1:8765/api/global/coverage?region=world
 
-HISTORICAL LIMITATIONS
-  Only one real year (2023) is embedded. No defensible 20+ year baseline,
-  cross-year anomaly or held-out calibration can be claimed until more
-  official FIRMS historical archives are loaded. Official Alberta agency CSV
-  is NOT embedded. Live FIRMS checks require a private API key.
+JUDGE DEMO (three minutes)
+  Enter observatory -> Explore World June 2026 -> Satellite Blindspot Reveal
+  -> Drag MODIS vs VIIRS divider -> select a month / focus area -> mission brief.
+  Explain that standard 2026 is global and archived Alberta 2023 is a distinct
+  case study; neither establishes a 20+ year global climatology.
 
-See docs/PITCH_3_MINUTES.md, docs/METHODS_AUDIT.md, docs/IMPORT_MORE_YEARS.md.
+OPTIONAL CURRENT NASA LIVE API
+  NASA FIRMS API MAP_KEY is only needed to fetch observations not already
+  contained in the downloaded ZIPs. Put it in .env; never commit .env.
 
-CODE-ONLY ZIP (FOR GITHUB):
-  Contains source, tests, docs, importer, but NO ZIP archives or SQLite DB.
-  To demo without internet, run the COMPLETE ZIP.
+GITHUB
+  Use the separate code-only ZIP. It excludes original raw NASA files and
+  SQLite databases; project maintainers can rebuild with source downloads.
+
+READ: docs/WORLD_DATA_2025_2026.md for source counts and scientific caveats.

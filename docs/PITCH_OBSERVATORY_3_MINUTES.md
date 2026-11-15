@@ -1,3 +1,7 @@
+> **NEW WORLD DATA EDITION:** The previous text below focuses on the earlier Alberta-only case study. For accurate November 2025–November 2026 worldwide data numbers, dates and science limitations, use [GLOBAL_JUDGE_PITCH.md](GLOBAL_JUDGE_PITCH.md) and [WORLD_DATA_2025_2026.md](WORLD_DATA_2025_2026.md).
+
+---
+
 # Parallax BLINDSPOT — three-minute live story
 
 **Audience:** Maya, a wildfire preparedness analyst planning monitoring and research in Alberta. **Problem:** two NASA satellite systems report different hotspot observations. **Solution:** reveal where their records overlap or diverge; inspect history and uncertainty; export a defensible readiness brief.
