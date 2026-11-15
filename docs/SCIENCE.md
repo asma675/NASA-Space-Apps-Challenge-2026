@@ -7,7 +7,7 @@ FIRMS active fire hotspot detection records, separated into satellite product na
 ## Harmonization in this MVP
 
 1. Preserve product/provenance. Validate input coordinates and ISO dates.
-2. Transform lat/lon (EPSG:4326) to Canada Atlas Lambert (EPSG:3978) via `pyproj`.
+2. Transform lat/lon (EPSG:4326) to global Equal Earth (EPSG:8857) via `pyproj`. The projected 10-km cells are used consistently across Canadian and World views; this differs from the earlier Canadian projection and its previous counts.
 3. Divide projected x/y coordinates into fixed 10,000-m cells.
 4. Make `(UTC day, projected cell, family)` a unique activity record, counting one regardless of duplicate detections.
 5. Construct union across both families; mark *matched* if the same cell-day has a MODIS AND a VIIRS detection, *exclusive* otherwise.

@@ -1,4 +1,4 @@
-"""Defensible prototype-level harmonization to a common Canadian projected grid/day.
+"""Defensible prototype-level spatial/temporal alignment to one global equal-area grid/day.
 
 We do NOT correct sensor detection probability, cloud coverage, or orbital sampling.
 Active grid-days are not individual fires, area burned, or measured hazard.
@@ -9,15 +9,18 @@ from datetime import date, timedelta
 from math import ceil
 from pyproj import Transformer
 
-# Canada Atlas Lambert; metre-based regional coordinates. Do not claim equal area.
-TRANSFORMER = Transformer.from_crs("EPSG:4326", "EPSG:3978", always_xy=True)
+# Projected comparison methods. The global edition uses Equal Earth consistently.
+CANADA_TRANSFORMER = Transformer.from_crs("EPSG:4326", "EPSG:3978", always_xy=True)
+GLOBAL_TRANSFORMER = Transformer.from_crs("EPSG:4326", "EPSG:8857", always_xy=True) # Equal Earth, global equal-area
+TRANSFORMER = GLOBAL_TRANSFORMER  # Backward-compatible alias; new edition uses Equal Earth globally.
 CELL_METRES = 10000
 MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
 
-def cell_id(lat: float, lon: float):
-    x, y = TRANSFORMER.transform(lon, lat)
-    return (int(x // CELL_METRES),int(y // CELL_METRES))
+def cell_id(lat: float, lon: float, global_grid: bool=True):
+    projection=GLOBAL_TRANSFORMER if global_grid else CANADA_TRANSFORMER
+    x,y=projection.transform(lon,lat)
+    return (int(x//CELL_METRES),int(y//CELL_METRES))
 
 
 def month_range(start: str, end: str):
@@ -28,16 +31,19 @@ def month_range(start: str, end: str):
         sy,sm = (sy+1,1) if sm==12 else (sy,sm+1)
 
 
-def analyze(rows: list[dict], region: dict, start: str, end: str, mode: str):
+def analyze(rows, region: dict, start: str, end: str, mode: str):
     # Deduplicates repeated detections within each (cell, UTC-day, sensor family).
     events = defaultdict(set)
     record_counts = defaultdict(lambda: {"MODIS":0,"VIIRS":0})
     representative = {}
+    loaded_observations = 0
+    global_grid=region.get('grid_projection')=='global'
     for row in rows:
+        loaded_observations += 1
         family = row["family"]
         if family not in ("MODIS","VIIRS"):
             continue
-        cell = cell_id(row["latitude"],row["longitude"])
+        cell = cell_id(row["latitude"],row["longitude"],global_grid)
         key = (row["acq_date"],cell)
         events[key].add(family)
         record_counts[row["acq_date"][:7]][family] += 1
@@ -93,11 +99,12 @@ def analyze(rows: list[dict], region: dict, start: str, end: str, mode: str):
         explanation="No detections in the loaded records does not demonstrate an absence of fires or complete satellite coverage."
     return {
         "region":region,"mode":mode,"start":start,"end":end,
+        "loaded_observations":loaded_observations,
         "summary":{**total,"sensor_agreement_pct":agreement,"peak_months":[x["name"] for x in highest],
                    "headline":headline,"explanation":explanation},
         "timeline":timeline,"seasonal":seasonal,"points":points,
         "methodology": {
-           "grid":"10-km cells in Canada Atlas Lambert (EPSG:3978), grouped by UTC day",
+           "grid":("10-km projected cells in global Equal Earth (EPSG:8857), grouped by UTC day" if global_grid else "10-km cells in Canada Atlas Lambert (EPSG:3978), grouped by UTC day"),
            "harmonization":"Spatial/temporal alignment and per-family de-duplication. NOT calibrated for detection sensitivity.",
            "metric":"Active grid-days (spatial cell x UTC date with >=1 hotspot detection)",
            "agreement":"Percentage of union active grid-days with detections from both MODIS and VIIRS; NOT accuracy or validation",

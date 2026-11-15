@@ -29,6 +29,6 @@ Use official attribution and comply with each source's terms. No NASA logo is bu
 ## Geographic basemap implementation
 
 - **MapTiler Cloud vector basemap:** Optional public API key; used only for geographical background (Dataviz Dark, Dataviz Light, Satellite, Satellite Hybrid). MapTiler data does not replace NASA active-fire observations. https://docs.maptiler.com/leaflet/examples/vector-tiles-in-leaflet-js/
-- **CARTO + OpenStreetMap basemap:** No-key fallback. Attribution shown inside the map. https://carto.com/attributions
+- **OpenStreetMap basemap:** No-key streets and themed night view. Normal interactive tile use is subject to https://operations.osmfoundation.org/policies/tiles/. Esri World Imagery and the Esri World Boundaries and Places reference overlay support the Wildfire Watch satellite view. CARTO basemap tiles now require their own API key and are not used by default.
 - Satellite imagery is generally a multi-date mosaic, **not** satellite fire observation imagery for the selected historical day.
 - Web map tiles and SDK require internet access.

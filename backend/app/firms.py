@@ -35,6 +35,8 @@ def fetch_nasa(region: str, start: date, end: date, products: list[str]):
     if not key:
         raise ValueError("Set FIRMS_MAP_KEY in your .env file")
     if region not in REGIONS: raise ValueError("Invalid supported region")
+    if region == "world":
+        raise ValueError("Interactive historical World imports are disabled: use official FIRMS archive ZIPs and scripts/import_multi_year.py; for recent global observations use World Atlas → Check NASA now.")
     if not products or any(p not in SOURCES for p in products):
         raise ValueError("Invalid sensor selections")
     if start>end or (end-start).days>20:

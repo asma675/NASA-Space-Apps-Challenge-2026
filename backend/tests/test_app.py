@@ -61,7 +61,7 @@ def test_maptiler_public_config_and_map_controls(client, monkeypatch):
     config = client.get('/api/config').json()
     assert config['maptiler_key_configured'] is True
     assert config['maptiler_public_key'] == 'public-maptiler-demo-key'
-    html = client.get('/').text
+    html = client.get('/explore').text
     assert 'id="map-style"' in html
     assert 'id="maptiler-key"' in html
     assert 'leaflet-maptilersdk' in html

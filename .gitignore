@@ -5,4 +5,16 @@ __pycache__/
 .pytest_cache/
 .venv/
 .DS_Store
+# Original NASA archive ZIPs are stored locally and must not be committed.
 data/raw/
+
+# Alberta agency public CSV downloaded for local analysis
+data/raw/
+
+# Local NASA datasets and credentials
+data/
+.env
+*.sqlite3
+*.zip
+.venv/
+__pycache__/

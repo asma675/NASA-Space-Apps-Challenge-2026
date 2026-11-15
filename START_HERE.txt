@@ -1,0 +1,43 @@
+PARALLAX BLINDSPOT — INVESTIGATION EDITION (Alberta 2023)
+======================================================
+
+COMPLETE EDITION HAS NASA DATA EMBEDDED — NO REIMPORT REQUIRED
+  Source observations: 547,021 total (MODIS 90,039; VIIRS 456,982)
+  After NASA type filter: 542,775 presumed vegetation-fire detections
+  Excluded as static/offshore/etc: 4,246 tagged records
+  Source files: data/raw/ (original ZIPs, unzipping NOT required)
+  Database: data/blindspot.sqlite3
+
+WINDOWS FIRST TIME
+  1. Extract the complete zip, open its extracted folder in VS Code.
+  2. Run: py -m pip install -r backend/requirements.txt
+  3. Run: py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8765 --reload
+  4. Open: http://127.0.0.1:8765
+  5. Hard refresh browser with Ctrl + Shift + R.
+
+3-MINUTE LIVE DEMO
+  - Landing globe -> BLINDSPOT REVEAL -> drag divider -> REVEAL BLINDSPOTS
+  - Select Sep 2023 or Draw your area by clicking two map corners
+  - See counts for the selected area; reset area for 2023 full-season totals
+  - Show quality gate: excluded types do not enter the main burn calendar
+  - Anomaly and calibration panels honestly show that more years are required
+  - Open Canada Evidence Lab and download the mission Readiness Brief
+
+EXPECTED SCIENTIFICALLY FILTERED ALBERTA MAY-OCT 2023
+  MODIS-only: 1,001 grid-days
+  VIIRS-only: 6,426 grid-days
+  BOTH: 8,751 grid-days
+  UNION: 16,178 grid-days
+  Co-observation: 54.1% (NOT accuracy)
+
+HISTORICAL LIMITATIONS
+  Only one real year (2023) is embedded. No defensible 20+ year baseline,
+  cross-year anomaly or held-out calibration can be claimed until more
+  official FIRMS historical archives are loaded. Official Alberta agency CSV
+  is NOT embedded. Live FIRMS checks require a private API key.
+
+See docs/PITCH_3_MINUTES.md, docs/METHODS_AUDIT.md, docs/IMPORT_MORE_YEARS.md.
+
+CODE-ONLY ZIP (FOR GITHUB):
+  Contains source, tests, docs, importer, but NO ZIP archives or SQLite DB.
+  To demo without internet, run the COMPLETE ZIP.
