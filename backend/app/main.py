@@ -19,6 +19,8 @@ from .canada import agency_context, import_agency_csv
 from .investigation import investigate, agency_match, _history
 from .global_explorer import archive_inventory, latest_hotspots, LIVE_SOURCES
 from .global_data import ready as world_ready, global_analysis, global_inventory, global_investigation, global_history, FIRST as GLOBAL_FIRST, LAST as GLOBAL_LAST, combine_archives
+from .earth_systems import weather_conditions, air_conditions, sampled_air_grid
+import httpx
 
 ROOT=Path(__file__).resolve().parents[2]
 FRONTEND=ROOT/"frontend"
@@ -384,3 +386,53 @@ def observatory_story():
 @app.get("/explore")
 def explorer():
     return FileResponse(FRONTEND/"index.html")
+
+
+# Separate environmental workspaces; original Observatory and Explore routes remain untouched.
+@app.get("/earth")
+def earth_hub():
+    return FileResponse(FRONTEND/"earth.html")
+
+@app.get("/vegetation")
+def vegetation_map():
+    return FileResponse(FRONTEND/"vegetation.html")
+
+@app.get("/air-quality")
+def air_quality_map():
+    return FileResponse(FRONTEND/"air-quality.html")
+
+@app.get("/navigation")
+def navigation_map():
+    return FileResponse(FRONTEND/"navigation.html")
+
+@app.get("/forecast")
+def forecast_scenarios():
+    return FileResponse(FRONTEND/"forecast.html")
+
+
+def earth_provider_failure(exc: Exception):
+    # Never substitute synthetic numbers when the external model is unavailable.
+    if isinstance(exc,(ValueError,TypeError)):
+        raise HTTPException(status_code=400,detail=str(exc))
+    if isinstance(exc,httpx.HTTPError):
+        raise HTTPException(status_code=503,detail="External environmental forecast is unavailable. Please retry later; no fallback values were invented.")
+    raise exc
+
+@app.get("/cascades")
+def cascade_scenarios():
+    return FileResponse(FRONTEND/"cascades.html")
+
+@app.get("/api/earth/weather")
+async def earth_weather(lat: float=Query(53.55,ge=-85,le=85),lon:float=Query(-113.5,ge=-180,le=180)):
+    try:return await weather_conditions(lat,lon)
+    except Exception as exc:return earth_provider_failure(exc)
+
+@app.get("/api/earth/air")
+async def earth_air(lat: float=Query(53.55,ge=-85,le=85),lon:float=Query(-113.5,ge=-180,le=180)):
+    try:return await air_conditions(lat,lon)
+    except Exception as exc:return earth_provider_failure(exc)
+
+@app.get("/api/earth/air-grid")
+async def earth_air_grid(lat: float=Query(53.55,ge=-85,le=85),lon:float=Query(-113.5,ge=-180,le=180),delta:float=Query(1,ge=.15,le=3)):
+    try:return await sampled_air_grid(lat,lon,delta)
+    except Exception as exc:return earth_provider_failure(exc)

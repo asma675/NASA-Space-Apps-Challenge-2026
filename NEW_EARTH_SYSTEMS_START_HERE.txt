@@ -1,0 +1,38 @@
+PARALLAX BLINDSPOT — EARTH SYSTEMS EDITION
+=========================================
+CREATORS: Asma Ahmed & Ayaan Ahmed — Parallax Labs
+
+NEW PAGES (SEPARATE, NOT ONE LONG SCROLLING PAGE)
+  /earth         - Planet Earth Systems Home (links to all new maps)
+  /vegetation    - NASA GIBS NDVI satellite vegetation overlays
+  /air-quality   - Open-Meteo/Copernicus modeled AQI and PM2.5 samples
+  /navigation    - OpenStreetMap road route context (NOT evacuation)
+  /forecast      - 7-day weather-attention scenarios (NOT ignition prediction)
+  /cascades      - Possible exposure and infrastructure concerns (NOT outcome forecast)
+
+ORIGINAL PAGES ARE PRESERVED
+  /              - Original cinematic Observatory homepage
+  /observatory   - Maya's guided interactive story
+  /explore       - NASA Global 2025–26 + Alberta 2023 analysis
+
+RUN ON WINDOWS:
+1. Extract the ZIP to Downloads.
+2. Double-click START_EARTH_SYSTEMS_WINDOWS.bat.
+3. Visit http://127.0.0.1:8777/earth in Chrome or Edge.
+   No API keys required for the new publicly sourced services.
+   A network connection IS required for live map tiles and external model data.
+4. Press CTRL+C in the terminal to stop the server.
+
+ALTERNATIVE IN VS CODE POWERSHELL:
+  cd "C:\Users\asmaa\Downloads\Parallax_BLINDSPOT_Earth_Systems"
+  py -m pip install -r backend/requirements.txt
+  py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8777 --reload
+
+SCIENTIFIC LIMITATIONS:
+This does not predict fires, fire spread, evacuation safety, infrastructure
+failures, deaths or economic loss. Weather-attention scores are unvalidated
+illustrative heuristics. Never use this app in an emergency.
+
+See docs/EARTH_SYSTEMS_SOURCES_METHODS.md for methodology and source URLs.
+
+GitHub source-only and incremental small patch releases are also supplied.

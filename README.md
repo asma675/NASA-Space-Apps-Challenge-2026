@@ -1,5 +1,34 @@
 # Parallax BLINDSPOT — Observatory Experience / NASA World 2025–2026 Update
 
+## Quick start — Earth Systems on Windows
+
+Extract this edition and double-click `START_EARTH_SYSTEMS_WINDOWS.bat`. It installs dependencies and starts on **port 8777**, separate from older BLINDSPOT instances. Then open **http://127.0.0.1:8777/earth**. Alternatively launch manually:
+
+```powershell
+py -m pip install -r backend/requirements.txt
+py -m uvicorn app.main:app --app-dir backend --host 127.0.0.1 --port 8777 --reload
+```
+
+**All new live layers require Internet connectivity; the embedded historical NASA datasets do not.**
+
+## NEW — Earth Systems independent maps (November 2026)
+
+This edition **preserves all original Observatory, World Explorer, Alberta 2023 and NASA FIRMS 2025–26 data** and adds five separate interactive map pages plus an Earth Systems launcher.
+
+| Page | What it adds | Data providers |
+| --- | --- | --- |
+| **[Earth Systems Hub](/earth)** | Five independent research workspaces | Aggregator |
+| **[Vegetation Health](/vegetation)** | Time-selectable NASA NDVI 8-day vegetation imagery / corrected reflectance | NASA GIBS WMS |
+| **[Air Quality](/air-quality)** | Modeled AQI / PM2.5 point sampling and 5-day outlook, optional NASA aerosol overlay | Copernicus CAMS via Open-Meteo; NASA GIBS |
+| **[Navigation Context](/navigation)** | Point-to-point ordinary road routing (never evacuation guidance) | OpenStreetMap / OSRM demo |
+| **[Future Scenarios](/forecast)** | 7-day forecast weather, transparent illustrative condition index and what-if scenarios | Open-Meteo weather models |
+| **[Cascading Effects](/cascades)** | Model-grounded potential concern pathways with verification tasks | Weather + CAMS air model |
+
+**Important:** Forecast weather is not a validated future-fire prediction. The indicator is an **unvalidated, manually weighted weather-attention heuristic**, not ignition probability. No forecasted losses or safe evacuation routes are provided. These pages fetch third-party data over the internet and show **unavailable** instead of making up numbers if a source fails. The original NASA archive remains unchanged.
+
+For sources, formulas, provider restrictions and scientific limitations, read **[docs/EARTH_SYSTEMS_SOURCES_METHODS.md](docs/EARTH_SYSTEMS_SOURCES_METHODS.md)**. AI-assisted code is disclosed in **[docs/AI_ASSISTANCE.md](docs/AI_ASSISTANCE.md)**.
+
+
 **Current complete edition:** The original observatory story, Globe, Blindspot Reveal, historical calendar, Watchtower, Canadian evidence, and seasonal brief are preserved. New NASA global data are already bundled; no API key or manual ZIP extraction is needed.
 
 - World requests **#850371 MODIS C6.1** and **#850372 VIIRS S-NPP C2**: **20,659,624 original rows** in two preserved ZIP files. Dates cover parts of **November 12, 2025 to November 13, 2026** (S-NPP VIIRS NRT through November 2, 2026).
@@ -276,18 +305,3 @@ NRCan annual composite burned-area polygons: https://cwfis.cfs.nrcan.gc.ca/downl
 - NBAC: documented external source; not locally loaded.
 
 **Challenge framing:** the core deliverable is the historical burning-activity **calendar** and explainable common-cell-day comparison of MODIS/VIIRS. Contextual datasets are for triangulation and human decision-making. BLINDSPOT does not claim cross-sensor detection sensitivity calibration, wildfire ignition prediction, or operational fire alerts.
-
----
-
-### 👩‍💻 Meet the Creators
-
-**Parallax BLINDSPOT** was created and developed by **Asma Ahmed and Ayaan Ahmed** for the NASA Space Apps Challenge 2026.
-
-- **Asma Ahmed** — [LinkedIn](https://www.linkedin.com/in/asma-ahmed67/)
-- **Ayaan Ahmed** — [LinkedIn](https://linkedin.com/in/ayaanahmed05)
-
-🚀 **We're open to Winter and Summer internship opportunities!**
-
-We're passionate about software engineering, artificial intelligence, geospatial technology, and building solutions that make a real-world impact. We'd love to connect with teams working on innovative technologies.
-
-**© 2026 Asma Ahmed & Ayaan Ahmed. All rights reserved, subject to the repository's open-source license.**

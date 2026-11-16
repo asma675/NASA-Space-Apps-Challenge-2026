@@ -11,7 +11,7 @@ data/raw/
 # Alberta agency public CSV downloaded for local analysis
 data/raw/
 
-# Local NASA datasets and secrets
+# Local data and private settings
 data/
 .env
 *.sqlite3
@@ -20,3 +20,4 @@ data/
 *.zip
 .venv/
 __pycache__/
+.pytest_cache/
